@@ -1,5 +1,6 @@
 import { CategoryTabs } from "@/components/CategoryTabs";
 import { InfiniteScroll } from "@/components/InfiniteScroll";
+import { ViralImagesSection } from "@/components/ViralImagesSection";
 import { VideoGrid } from "@/components/VideoGrid";
 import { AppShell } from "@/layouts/AppShell";
 import { getVideos } from "@/services/videoRepository";
@@ -34,6 +35,7 @@ export default async function HomePage() {
           <h2 className="mb-4 text-xl font-bold">Latest uploads</h2>
           <VideoGrid videos={trending} />
         </section>
+        <ViralImagesSection />
         <section className="py-6">
           <h2 className="mb-4 text-xl font-bold">Recommended media</h2>
           <VideoGrid videos={recommended} />

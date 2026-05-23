@@ -24,9 +24,9 @@ export function Navbar() {
             <SearchBar />
           </Suspense>
         </div>
-        <button className="hidden rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-neutral-200 transition hover:border-orange-400/60 hover:text-orange-300 lg:inline-flex">
-          <Upload className="mr-2 size-4" /> Upload
-        </button>
+        <Link href="/admin" className="hidden rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-neutral-200 transition hover:border-orange-400/60 hover:text-orange-300 lg:inline-flex">
+          <Upload className="mr-2 size-4" /> Admin
+        </Link>
         <button onClick={toggleTheme} className="rounded-full p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white" aria-label="Toggle theme">
           {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
         </button>
