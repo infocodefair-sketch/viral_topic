@@ -3,7 +3,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
-import { getVideos } from "@/services/mockApi";
+import { getVideos } from "@/services/videoClient";
 import { SkeletonLoader } from "./SkeletonLoader";
 import { VideoGrid } from "./VideoGrid";
 

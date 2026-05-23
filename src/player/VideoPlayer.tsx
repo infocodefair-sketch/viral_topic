@@ -18,20 +18,22 @@ export function VideoPlayer({ video }: { video: Video }) {
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(22);
   const { theaterMode, miniPlayer } = useUIStore();
+  const source = video.streamUrl ?? "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+  const sourceType = video.sourceMimeType ?? "application/x-mpegURL";
 
   useEffect(() => {
-    if (!videoRef.current || playerRef.current) return;
+    if (video.kind === "image" || !videoRef.current || playerRef.current) return;
     playerRef.current = videojs(videoRef.current, {
       controls: false,
       fluid: true,
       preload: "metadata",
       playsinline: true,
-      sources: [{ src: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", type: "application/x-mpegURL" }],
+      sources: [{ src: source, type: sourceType }],
     });
 
-    if (Hls.isSupported()) {
+    if (sourceType === "application/x-mpegURL" && Hls.isSupported()) {
       const hls = new Hls();
-      hls.loadSource("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
+      hls.loadSource(source);
       hls.attachMedia(videoRef.current);
     }
 
@@ -39,7 +41,7 @@ export function VideoPlayer({ video }: { video: Video }) {
       playerRef.current?.dispose();
       playerRef.current = null;
     };
-  }, []);
+  }, [source, sourceType, video.kind]);
 
   useEffect(() => {
     const player = playerRef.current;
@@ -58,13 +60,19 @@ export function VideoPlayer({ video }: { video: Video }) {
       )}
     >
       <div className="relative aspect-video">
-        {!playing ? (
+        {video.kind === "image" ? (
+          <Image src={video.streamUrl ?? video.thumbnail} alt={video.title} fill priority className="object-contain" />
+        ) : !playing ? (
           <Image src={video.thumbnail} alt={video.title} fill priority className="object-cover opacity-80" />
         ) : null}
-        <video ref={videoRef} className="video-js absolute inset-0 size-full object-cover" poster={video.thumbnail} />
-        <button aria-label="Back 10 seconds" onDoubleClick={() => setProgress(Math.max(0, progress - 10))} className="absolute inset-y-0 left-0 w-1/3 md:hidden" />
-        <button aria-label="Forward 10 seconds" onDoubleClick={() => setProgress(Math.min(100, progress + 10))} className="absolute inset-y-0 right-0 w-1/3 md:hidden" />
-        <PlayerControls playing={playing} setPlaying={setPlaying} progress={progress} setProgress={setProgress} />
+        {video.kind !== "image" ? (
+          <>
+            <video ref={videoRef} className="video-js absolute inset-0 size-full object-cover" poster={video.thumbnail} />
+            <button aria-label="Back 10 seconds" onDoubleClick={() => setProgress(Math.max(0, progress - 10))} className="absolute inset-y-0 left-0 w-1/3 md:hidden" />
+            <button aria-label="Forward 10 seconds" onDoubleClick={() => setProgress(Math.min(100, progress + 10))} className="absolute inset-y-0 right-0 w-1/3 md:hidden" />
+            <PlayerControls playing={playing} setPlaying={setPlaying} progress={progress} setProgress={setProgress} />
+          </>
+        ) : null}
       </div>
     </motion.section>
   );

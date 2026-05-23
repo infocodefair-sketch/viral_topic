@@ -12,6 +12,11 @@ export type Video = {
   creator: Creator;
   thumbnail: string;
   preview: string;
+  kind?: "video" | "image";
+  streamUrl?: string;
+  sourceMimeType?: string;
+  driveFileId?: string;
+  fileSize?: number;
   duration: string;
   views: number;
   likes: number;
@@ -33,6 +38,8 @@ export type Playlist = {
 
 export const categories = [
   "Trending",
+  "Drive Videos",
+  "Drive Images",
   "Featured",
   "Studio",
   "Live",

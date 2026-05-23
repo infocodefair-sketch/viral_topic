@@ -3,9 +3,11 @@ import Image from "next/image";
 import { CommentCard } from "@/components/CommentCard";
 import { VideoCard } from "@/components/VideoCard";
 import { AppShell } from "@/layouts/AppShell";
-import { getSuggested, getVideo } from "@/services/mockApi";
+import { getSuggested, getVideo } from "@/services/videoRepository";
 import { formatViews, timeAgo } from "@/utils/format";
 import { VideoPlayer } from "@/player/VideoPlayer";
+
+export const dynamic = "force-dynamic";
 
 export default async function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,7 +27,7 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <button className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/15"><ThumbsUp className="mr-2 inline size-4" />{formatViews(video.likes)}</button>
-              <button className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/15"><ThumbsDown className="mr-2 inline size-4" />Dislike</button>
+              {video.kind !== "image" ? <button className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/15"><ThumbsDown className="mr-2 inline size-4" />Dislike</button> : null}
               <button className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/15"><Share2 className="mr-2 inline size-4" />Share</button>
               <button className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/15"><Bookmark className="mr-2 inline size-4" />Save</button>
             </div>

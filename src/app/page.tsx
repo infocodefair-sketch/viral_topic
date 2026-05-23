@@ -2,11 +2,14 @@ import { CategoryTabs } from "@/components/CategoryTabs";
 import { InfiniteScroll } from "@/components/InfiniteScroll";
 import { VideoGrid } from "@/components/VideoGrid";
 import { AppShell } from "@/layouts/AppShell";
-import { videos } from "@/mock/videos";
+import { getVideos } from "@/services/videoRepository";
 
-export default function HomePage() {
-  const trending = videos.filter((video) => video.trending).slice(0, 6);
-  const recommended = [...videos].sort((a, b) => b.likes - a.likes).slice(0, 12);
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const { items } = await getVideos({ limit: 48 });
+  const trending = items.filter((video) => video.trending).slice(0, 6);
+  const recommended = [...items].sort((a, b) => b.likes - a.likes).slice(0, 12);
 
   return (
     <AppShell>
@@ -17,9 +20,9 @@ export default function HomePage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-sm font-bold uppercase text-orange-300">Realtime feed</p>
-                <h1 className="mt-2 text-3xl font-black tracking-normal sm:text-5xl">Premium streaming discovery</h1>
+                <h1 className="mt-2 text-3xl font-black tracking-normal sm:text-5xl">Google Drive media discovery</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
-                  Placeholder-only frontend with fast grids, animated cards, creator metadata, and mock recommendations.
+                  Videos and images are fetched from your Drive folder, then rendered through the existing fast grid and watch experience.
                 </p>
               </div>
               <div className="rounded-lg border border-orange-400/30 bg-orange-500/10 px-4 py-3">
@@ -28,11 +31,11 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <h2 className="mb-4 text-xl font-bold">Trending videos</h2>
+          <h2 className="mb-4 text-xl font-bold">Latest from Drive</h2>
           <VideoGrid videos={trending} />
         </section>
         <section className="py-6">
-          <h2 className="mb-4 text-xl font-bold">Recommended for you</h2>
+          <h2 className="mb-4 text-xl font-bold">Recommended media</h2>
           <VideoGrid videos={recommended} />
         </section>
         <section className="py-6">

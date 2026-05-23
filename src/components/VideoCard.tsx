@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BadgeCheck, Flame, Play } from "lucide-react";
+import { BadgeCheck, Flame, ImageIcon, Play } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { memo, useState } from "react";
@@ -35,7 +35,7 @@ export const VideoCard = memo(function VideoCard({ video, priority = false }: { 
           {video.trending ? <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-orange-500 px-2 py-1 text-[10px] font-bold text-black"><Flame className="size-3" /> Hot</span> : null}
           <motion.div animate={{ opacity: hovered ? 1 : 0 }} className="absolute inset-0 grid place-items-center bg-black/20">
             <span className="grid size-12 place-items-center rounded-full bg-orange-500 text-black shadow-lg shadow-orange-500/40">
-              <Play className="ml-0.5 size-5 fill-current" />
+              {video.kind === "image" ? <ImageIcon className="size-5" /> : <Play className="ml-0.5 size-5 fill-current" />}
             </span>
           </motion.div>
           {hovered ? <div className="absolute bottom-0 left-0 h-1 w-2/3 bg-orange-500" /> : null}
