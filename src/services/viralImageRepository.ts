@@ -126,20 +126,7 @@ export async function createViralImage(input: {
   descriptionHtml?: string;
   files: File[];
 }) {
-  const uploadedImages = await Promise.all(
-    input.files.map(async (file) => {
-      const arrayBuffer = await file.arrayBuffer();
-      const uploaded = await uploadBuffer(Buffer.from(arrayBuffer));
-
-      return {
-        imageUrl: uploaded.secure_url,
-        publicId: uploaded.public_id,
-        width: uploaded.width,
-        height: uploaded.height,
-        format: uploaded.format,
-      };
-    }),
-  );
+  const uploadedImages = await uploadFiles(input.files);
   const db = await getDb();
   const document = {
     title: input.title,
@@ -159,4 +146,89 @@ export async function createViralImage(input: {
   const result = await db.collection<Omit<ViralImageDocument, "_id">>("viral_images").insertOne(document);
 
   return toViralImage({ _id: result.insertedId, ...document });
+}
+
+async function uploadFiles(files: File[]) {
+  return Promise.all(
+    files.map(async (file) => {
+      const arrayBuffer = await file.arrayBuffer();
+      const uploaded = await uploadBuffer(Buffer.from(arrayBuffer));
+
+      return {
+        imageUrl: uploaded.secure_url,
+        publicId: uploaded.public_id,
+        width: uploaded.width,
+        height: uploaded.height,
+        format: uploaded.format,
+      };
+    }),
+  );
+}
+
+export async function updateViralImage(
+  id: string,
+  input: {
+    title: string;
+    description: string;
+    titleHtml?: string;
+    descriptionHtml?: string;
+    files?: File[];
+  },
+) {
+  if (!ObjectId.isValid(id)) {
+    return null;
+  }
+
+  const db = await getDb();
+  const existing = await db.collection<ViralImageDocument>("viral_images").findOne({ _id: new ObjectId(id) });
+
+  if (!existing) {
+    return null;
+  }
+
+  const existingAssets = getAssets(existing);
+  const uploadedImages = input.files?.length ? await uploadFiles(input.files) : [];
+  const nextImages = [...existingAssets, ...uploadedImages];
+  const coverImageUrl = nextImages[0]?.imageUrl ?? existing.coverImageUrl ?? existing.imageUrl;
+
+  await db.collection<ViralImageDocument>("viral_images").updateOne(
+    { _id: existing._id },
+    {
+      $set: {
+        title: input.title,
+        description: input.description,
+        titleHtml: input.titleHtml,
+        descriptionHtml: input.descriptionHtml,
+        coverImageUrl,
+        images: nextImages,
+        imageUrl: coverImageUrl,
+        publicId: nextImages[0]?.publicId ?? existing.publicId,
+        width: nextImages[0]?.width ?? existing.width,
+        height: nextImages[0]?.height ?? existing.height,
+        format: nextImages[0]?.format ?? existing.format,
+      },
+    },
+  );
+
+  return getViralImage(id);
+}
+
+export async function deleteViralImage(id: string) {
+  if (!ObjectId.isValid(id)) {
+    return false;
+  }
+
+  const db = await getDb();
+  const existing = await db.collection<ViralImageDocument>("viral_images").findOne({ _id: new ObjectId(id) });
+
+  if (!existing) {
+    return false;
+  }
+
+  const cloudinary = getCloudinary();
+  const publicIds = getAssets(existing).map((image) => image.publicId).filter(Boolean);
+  await Promise.all(publicIds.map((publicId) => cloudinary.uploader.destroy(publicId).catch(() => undefined)));
+  await db.collection<ViralImageDocument>("viral_images").deleteOne({ _id: existing._id });
+
+  return true;
 }

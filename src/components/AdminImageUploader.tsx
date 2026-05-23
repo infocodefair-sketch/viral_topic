@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Loader2, Plus, UploadCloud, X } from "lucide-react";
+import { Edit3, ImagePlus, Loader2, Plus, Trash2, UploadCloud, X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { RichTextEditor } from "@/components/RichTextEditor";
@@ -27,6 +27,33 @@ async function uploadImage(formData: FormData) {
   return (await response.json()) as ViralImage;
 }
 
+async function updateImage(input: { id: string; formData: FormData }) {
+  const response = await fetch(`/api/viral-images/${input.id}`, {
+    method: "PATCH",
+    body: input.formData,
+  });
+
+  if (!response.ok) {
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? "Unable to update image");
+  }
+
+  return (await response.json()) as ViralImage;
+}
+
+async function deleteImage(id: string) {
+  const response = await fetch(`/api/viral-images/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? "Unable to delete image");
+  }
+
+  return id;
+}
+
 function htmlToText(value: string) {
   if (typeof window === "undefined") {
     return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -37,9 +64,20 @@ function htmlToText(value: string) {
   return (element.textContent ?? "").replace(/\s+/g, " ").trim();
 }
 
+function plainToHtml(value: string) {
+  const escaped = value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+  return `<p>${escaped}</p>`;
+}
+
 export function AdminImageUploader() {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
+  const [editingImage, setEditingImage] = useState<ViralImage | null>(null);
   const [titleHtml, setTitleHtml] = useState("");
   const [descriptionHtml, setDescriptionHtml] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -64,6 +102,28 @@ export function AdminImageUploader() {
     onError: (uploadError: Error) => setError(uploadError.message),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: updateImage,
+    onSuccess: (image) => {
+      resetForm();
+      setFormOpen(false);
+      setError("");
+      queryClient.setQueryData(["viral-images"], (current: { items: ViralImage[] } | undefined) => ({
+        items: (current?.items ?? []).map((item) => (item.id === image.id ? image : item)),
+      }));
+    },
+    onError: (updateError: Error) => setError(updateError.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteImage,
+    onSuccess: (id) => {
+      queryClient.setQueryData(["viral-images"], (current: { items: ViralImage[] } | undefined) => ({
+        items: (current?.items ?? []).filter((item) => item.id !== id),
+      }));
+    },
+  });
+
   useEffect(() => {
     return () => {
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -78,6 +138,7 @@ export function AdminImageUploader() {
   }
 
   function resetForm() {
+    setEditingImage(null);
     setTitleHtml("");
     setDescriptionHtml("");
     setFiles([]);
@@ -86,10 +147,30 @@ export function AdminImageUploader() {
   }
 
   function closeForm() {
-    if (uploadMutation.isPending) return;
+    if (uploadMutation.isPending || updateMutation.isPending) return;
     resetForm();
     setError("");
     setFormOpen(false);
+  }
+
+  function openCreateForm() {
+    resetForm();
+    setError("");
+    setFormOpen(true);
+  }
+
+  function openEditForm(image: ViralImage) {
+    resetForm();
+    setEditingImage(image);
+    setTitleHtml(image.titleHtml || plainToHtml(image.title));
+    setDescriptionHtml(image.descriptionHtml || plainToHtml(image.description));
+    setError("");
+    setFormOpen(true);
+  }
+
+  function handleDelete(image: ViralImage) {
+    if (!window.confirm(`Delete "${image.title}" and its ${image.imageCount} image${image.imageCount === 1 ? "" : "s"}?`)) return;
+    deleteMutation.mutate(image.id);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -99,8 +180,8 @@ export function AdminImageUploader() {
     const title = htmlToText(titleHtml);
     const description = htmlToText(descriptionHtml);
 
-    if (!title || !description || files.length === 0) {
-      setError("Add a title, description, and at least one image.");
+    if (!title || !description || (!editingImage && files.length === 0)) {
+      setError(editingImage ? "Add a title and description." : "Add a title, description, and at least one image.");
       return;
     }
 
@@ -110,6 +191,12 @@ export function AdminImageUploader() {
     formData.set("titleHtml", titleHtml);
     formData.set("descriptionHtml", descriptionHtml);
     files.forEach((file) => formData.append("images", file));
+
+    if (editingImage) {
+      updateMutation.mutate({ id: editingImage.id, formData });
+      return;
+    }
+
     uploadMutation.mutate(formData);
   }
 
@@ -122,7 +209,7 @@ export function AdminImageUploader() {
             <h2 className="mt-1 text-2xl font-black">Recent viral topics</h2>
           </div>
           <button
-            onClick={() => setFormOpen(true)}
+            onClick={openCreateForm}
             className="inline-flex h-11 items-center rounded-lg bg-orange-500 px-5 text-sm font-black text-black transition hover:bg-orange-400"
           >
             <Plus className="mr-2 size-4" /> Add new entry
@@ -140,6 +227,21 @@ export function AdminImageUploader() {
               <div className="p-4">
                 <h3 className="line-clamp-2 text-sm font-bold">{image.title}</h3>
                 <p className="mt-2 line-clamp-2 text-sm text-neutral-400">{image.description}</p>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => openEditForm(image)}
+                    className="inline-flex h-9 flex-1 items-center justify-center rounded-lg bg-white/10 px-3 text-xs font-bold text-neutral-100 transition hover:bg-white/15"
+                  >
+                    <Edit3 className="mr-2 size-3.5" /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(image)}
+                    disabled={deleteMutation.isPending}
+                    className="inline-flex h-9 flex-1 items-center justify-center rounded-lg bg-red-500/10 px-3 text-xs font-bold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Trash2 className="mr-2 size-3.5" /> Delete
+                  </button>
+                </div>
               </div>
             </article>
           ))}
@@ -155,8 +257,8 @@ export function AdminImageUploader() {
                   <ImagePlus className="size-5" />
                 </span>
                 <div className="min-w-0">
-                  <h1 id="image-admin-title" className="text-2xl font-black">Image admin</h1>
-                  <p className="text-sm text-neutral-400">Publish viral image cards to the homepage.</p>
+                  <h1 id="image-admin-title" className="text-2xl font-black">{editingImage ? "Edit image topic" : "Image admin"}</h1>
+                  <p className="text-sm text-neutral-400">{editingImage ? "Update text or add more images to this topic." : "Publish viral image cards to the homepage."}</p>
                 </div>
                 <button type="button" onClick={closeForm} className="ml-auto rounded-full p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white" aria-label="Close form">
                   <X className="size-5" />
@@ -180,6 +282,16 @@ export function AdminImageUploader() {
 
                 <label className="block">
                   <span className="text-sm font-semibold text-neutral-300">Image</span>
+                  {editingImage ? (
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {editingImage.images.slice(0, 6).map((image, index) => (
+                        <div key={image.publicId} className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black">
+                          <Image src={image.imageUrl} alt={`Current image ${index + 1}`} fill sizes="120px" className="object-cover" />
+                          {index === 0 ? <span className="absolute left-2 top-2 rounded bg-orange-500 px-2 py-1 text-[10px] font-black text-black">Cover</span> : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                   <input
                     type="file"
                     accept="image/*"
@@ -187,7 +299,7 @@ export function AdminImageUploader() {
                     onChange={handleFilesChange}
                     className="mt-2 block w-full rounded-lg border border-dashed border-white/15 bg-black/30 px-3 py-3 text-sm text-neutral-300 file:mr-3 file:rounded-md file:border-0 file:bg-orange-500 file:px-3 file:py-2 file:text-sm file:font-black file:text-black"
                   />
-                  <span className="mt-2 block text-xs text-neutral-500">Upload up to 12 images for one topic.</span>
+                  <span className="mt-2 block text-xs text-neutral-500">{editingImage ? "Choose files only if you want to add more images." : "Upload up to 12 images for one topic."}</span>
                 </label>
 
                 {previewUrls.length > 0 ? (
@@ -204,11 +316,11 @@ export function AdminImageUploader() {
                 {error ? <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</p> : null}
 
                 <button
-                  disabled={uploadMutation.isPending}
+                  disabled={uploadMutation.isPending || updateMutation.isPending}
                   className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-orange-500 px-5 text-sm font-black text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {uploadMutation.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <UploadCloud className="mr-2 size-4" />}
-                  Publish topic
+                  {uploadMutation.isPending || updateMutation.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <UploadCloud className="mr-2 size-4" />}
+                  {editingImage ? "Save changes" : "Publish topic"}
                 </button>
               </div>
             </form>

@@ -2,6 +2,7 @@ import { CategoryTabs } from "@/components/CategoryTabs";
 import { InfiniteScroll } from "@/components/InfiniteScroll";
 import { ViralImagesSection } from "@/components/ViralImagesSection";
 import { VideoGrid } from "@/components/VideoGrid";
+import { WatchingNowCounter } from "@/components/WatchingNowCounter";
 import { AppShell } from "@/layouts/AppShell";
 import { getVideos } from "@/services/videoRepository";
 
@@ -28,7 +29,7 @@ export default async function HomePage() {
               </div>
               <div className="rounded-lg border border-orange-400/30 bg-orange-500/10 px-4 py-3">
                 <p className="text-xs uppercase text-neutral-400">Watching now</p>
-                <p className="font-mono text-2xl font-black text-orange-300">24,891</p>
+                <WatchingNowCounter />
               </div>
             </div>
           </div>
