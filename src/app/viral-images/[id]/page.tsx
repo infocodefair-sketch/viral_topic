@@ -33,8 +33,16 @@ export default async function ViralImageDetailPage({ params }: { params: Promise
             </div>
             <div className="flex flex-col justify-end p-5 sm:p-7">
               <p className="text-sm font-bold uppercase text-orange-300">Viral image topic</p>
-              <h1 className="mt-2 text-3xl font-black tracking-normal sm:text-5xl">{topic.title}</h1>
-              <p className="mt-4 text-sm leading-6 text-neutral-300">{topic.description}</p>
+              {topic.titleHtml ? (
+                <div className="rich-content rich-title mt-2" dangerouslySetInnerHTML={{ __html: topic.titleHtml }} />
+              ) : (
+                <h1 className="mt-2 text-3xl font-black tracking-normal sm:text-5xl">{topic.title}</h1>
+              )}
+              {topic.descriptionHtml ? (
+                <div className="rich-content mt-4 text-sm leading-6 text-neutral-300" dangerouslySetInnerHTML={{ __html: topic.descriptionHtml }} />
+              ) : (
+                <p className="mt-4 text-sm leading-6 text-neutral-300">{topic.description}</p>
+              )}
             </div>
           </div>
         </section>
@@ -49,8 +57,16 @@ export default async function ViralImageDetailPage({ params }: { params: Promise
                   <span className="absolute left-3 top-3 rounded-full bg-black/75 px-2 py-1 text-[10px] font-bold text-white">{index + 1}</span>
                 </div>
                 <div className="p-4">
-                  <h3 className="text-sm font-bold">{topic.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-neutral-400">{topic.description}</p>
+                  {topic.titleHtml ? (
+                    <div className="rich-content rich-card-title text-sm font-bold" dangerouslySetInnerHTML={{ __html: topic.titleHtml }} />
+                  ) : (
+                    <h3 className="text-sm font-bold">{topic.title}</h3>
+                  )}
+                  {topic.descriptionHtml ? (
+                    <div className="rich-content mt-2 text-sm leading-6 text-neutral-400" dangerouslySetInnerHTML={{ __html: topic.descriptionHtml }} />
+                  ) : (
+                    <p className="mt-2 text-sm leading-6 text-neutral-400">{topic.description}</p>
+                  )}
                 </div>
               </article>
             ))}

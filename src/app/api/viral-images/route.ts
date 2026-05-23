@@ -25,6 +25,8 @@ export async function POST(request: Request) {
 
   const title = formData.get("title")?.toString().trim();
   const description = formData.get("description")?.toString().trim();
+  const titleHtml = formData.get("titleHtml")?.toString().trim();
+  const descriptionHtml = formData.get("descriptionHtml")?.toString().trim();
   const files = formData
     .getAll("images")
     .filter((file): file is File => file instanceof File && file.size > 0);
@@ -52,6 +54,8 @@ export async function POST(request: Request) {
   const image = await createViralImage({
     title: title.slice(0, 120),
     description: description.slice(0, 600),
+    titleHtml: titleHtml?.slice(0, 3000),
+    descriptionHtml: descriptionHtml?.slice(0, 8000),
     files,
   });
 

@@ -7,6 +7,8 @@ export type ViralImage = {
   id: string;
   title: string;
   description: string;
+  titleHtml?: string;
+  descriptionHtml?: string;
   coverImageUrl: string;
   images: ViralImageAsset[];
   imageCount: number;
@@ -25,6 +27,8 @@ type ViralImageDocument = {
   _id: ObjectId;
   title: string;
   description: string;
+  titleHtml?: string;
+  descriptionHtml?: string;
   coverImageUrl?: string;
   images?: ViralImageAsset[];
   imageUrl: string;
@@ -59,6 +63,8 @@ const toViralImage = (image: ViralImageDocument): ViralImage => {
     id: image._id.toString(),
     title: image.title,
     description: image.description,
+    titleHtml: image.titleHtml,
+    descriptionHtml: image.descriptionHtml,
     coverImageUrl: cover,
     images: assets,
     imageCount: assets.length,
@@ -116,6 +122,8 @@ export async function getViralImage(id: string) {
 export async function createViralImage(input: {
   title: string;
   description: string;
+  titleHtml?: string;
+  descriptionHtml?: string;
   files: File[];
 }) {
   const uploadedImages = await Promise.all(
@@ -136,6 +144,8 @@ export async function createViralImage(input: {
   const document = {
     title: input.title,
     description: input.description,
+    titleHtml: input.titleHtml,
+    descriptionHtml: input.descriptionHtml,
     coverImageUrl: uploadedImages[0].imageUrl,
     images: uploadedImages,
     imageUrl: uploadedImages[0].imageUrl,

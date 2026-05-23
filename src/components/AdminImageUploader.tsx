@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Loader2, UploadCloud } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import type { ViralImage } from "@/services/viralImageRepository";
 
 async function fetchViralImages() {
@@ -26,10 +27,20 @@ async function uploadImage(formData: FormData) {
   return (await response.json()) as ViralImage;
 }
 
+function htmlToText(value: string) {
+  if (typeof window === "undefined") {
+    return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  }
+
+  const element = document.createElement("div");
+  element.innerHTML = value;
+  return (element.textContent ?? "").replace(/\s+/g, " ").trim();
+}
+
 export function AdminImageUploader() {
   const queryClient = useQueryClient();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [titleHtml, setTitleHtml] = useState("");
+  const [descriptionHtml, setDescriptionHtml] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -42,8 +53,8 @@ export function AdminImageUploader() {
   const uploadMutation = useMutation({
     mutationFn: uploadImage,
     onSuccess: (image) => {
-      setTitle("");
-      setDescription("");
+      setTitleHtml("");
+      setDescriptionHtml("");
       setFiles([]);
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
       setPreviewUrls([]);
@@ -72,7 +83,10 @@ export function AdminImageUploader() {
     event.preventDefault();
     setError("");
 
-    if (!title.trim() || !description.trim() || files.length === 0) {
+    const title = htmlToText(titleHtml);
+    const description = htmlToText(descriptionHtml);
+
+    if (!title || !description || files.length === 0) {
       setError("Add a title, description, and at least one image.");
       return;
     }
@@ -80,6 +94,8 @@ export function AdminImageUploader() {
     const formData = new FormData();
     formData.set("title", title);
     formData.set("description", description);
+    formData.set("titleHtml", titleHtml);
+    formData.set("descriptionHtml", descriptionHtml);
     files.forEach((file) => formData.append("images", file));
     uploadMutation.mutate(formData);
   }
@@ -100,25 +116,16 @@ export function AdminImageUploader() {
         <div className="mt-5 space-y-4">
           <label className="block">
             <span className="text-sm font-semibold text-neutral-300">Title</span>
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              maxLength={120}
-              className="mt-2 h-11 w-full rounded-lg border border-white/10 bg-black/30 px-3 text-sm outline-none transition focus:border-orange-400"
-              placeholder="Weekend edit is taking off"
-            />
+            <div className="mt-2">
+              <RichTextEditor value={titleHtml} onChange={setTitleHtml} placeholder="Weekend edit is taking off" compact />
+            </div>
           </label>
 
           <label className="block">
             <span className="text-sm font-semibold text-neutral-300">Description</span>
-            <textarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              maxLength={600}
-              rows={5}
-              className="mt-2 w-full resize-none rounded-lg border border-white/10 bg-black/30 px-3 py-3 text-sm outline-none transition focus:border-orange-400"
-              placeholder="Add a short caption or context for this image."
-            />
+            <div className="mt-2">
+              <RichTextEditor value={descriptionHtml} onChange={setDescriptionHtml} placeholder="Add a short caption or context for this image." />
+            </div>
           </label>
 
           <label className="block">
