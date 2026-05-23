@@ -25,7 +25,7 @@ export function SearchBar({ compact = false }: { compact?: boolean }) {
       <input
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder={compact ? "Search" : "Search videos, creators, tags"}
+        placeholder={compact ? "Search" : "Search videos and images"}
         className="h-11 w-full rounded-full border border-white/10 bg-white/[0.06] pl-10 pr-20 text-sm outline-none transition focus:border-orange-400/70 focus:bg-white/[0.09]"
       />
       {value ? (

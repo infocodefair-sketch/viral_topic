@@ -5,6 +5,7 @@ import { VideoGrid } from "@/components/VideoGrid";
 import { WatchingNowCounter } from "@/components/WatchingNowCounter";
 import { AppShell } from "@/layouts/AppShell";
 import { getVideos } from "@/services/videoRepository";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,12 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-          <h2 className="mb-4 text-xl font-bold">Latest uploads</h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-bold">Latest uploads</h2>
+            <Link href="/search" className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-neutral-200 transition hover:bg-white/15 hover:text-orange-300">
+              See all videos
+            </Link>
+          </div>
           <VideoGrid videos={trending} />
         </section>
         <ViralImagesSection />

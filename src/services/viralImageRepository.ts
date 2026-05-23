@@ -108,6 +108,29 @@ export async function getViralImages(limit = 8) {
   return images.map(toViralImage);
 }
 
+export async function searchViralImages(query: string, limit = 12) {
+  const needle = query.trim();
+
+  if (!needle) {
+    return [];
+  }
+
+  const db = await getDb();
+  const images = await db
+    .collection<ViralImageDocument>("viral_images")
+    .find({
+      $or: [
+        { title: { $regex: needle, $options: "i" } },
+        { description: { $regex: needle, $options: "i" } },
+      ],
+    })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .toArray();
+
+  return images.map(toViralImage);
+}
+
 export async function getViralImage(id: string) {
   if (!ObjectId.isValid(id)) {
     return null;
