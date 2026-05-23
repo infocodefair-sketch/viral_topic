@@ -1,0 +1,39 @@
+⨯ MongoServerError: Updating the path 'shares' would create a conflict at 'shares'
+    at async incrementVideoStat (src\services\engagementRepository.ts:56:3)
+    at async POST (src\app\api\videos\[id]\stats\route.ts:24:17)
+  54 |   const db = await getDb();
+  55 |
+> 56 |   await db.collection("video_stats").updateOne(
+     |   ^
+  57 |     { videoId },
+  58 |     {
+  59 |       $setOnInsert: defaultStats(videoId), {
+  errorLabelSet: Set(0) {},
+  errorResponse: {
+    index: 0,
+    code: 40,
+    errmsg: "Updating the path 'shares' would create a conflict at 'shares'"
+  },
+  index: 0,
+  code: 40
+}
+⨯ MongoServerError: Updating the path 'comments' would create a conflict at 'comments'
+    at async addVideoComment (src\services\engagementRepository.ts:90:3)
+    at async POST (src\app\api\videos\[id]\comments\route.ts:27:19)
+  88 |
+  89 |   const result = await db.collection<Omit<CommentDocument, "_id">>("video_comments").inser...
+> 90 |   await db.collection("video_stats").updateOne(
+     |   ^
+  91 |     { videoId },
+  92 |     {
+  93 |       $setOnInsert: defaultStats(videoId), {
+  errorLabelSet: Set(0) {},
+  errorResponse: {
+    index: 0,
+    code: 40,
+    errmsg: "Updating the path 'comments' would create a conflict at 'comments'"
+  },
+  index: 0,
+  code: 40
+}
+[browser] VIDEOJS: WARN: The element supplied is not included in the DOM (file://C:/Users/DELL/New folder/viral-topic/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)

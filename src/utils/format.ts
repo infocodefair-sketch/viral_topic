@@ -6,7 +6,12 @@ export function formatViews(value: number) {
 
 export function timeAgo(value: string) {
   const diff = Date.now() - new Date(value).getTime();
-  const days = Math.max(1, Math.floor(diff / 86_400_000));
+  const minutes = Math.max(0, Math.floor(diff / 60_000));
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} minutes ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hours ago`;
+  const days = Math.floor(diff / 86_400_000);
   if (days < 2) return "yesterday";
   if (days < 30) return `${days} days ago`;
   const months = Math.floor(days / 30);

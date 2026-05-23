@@ -1,0 +1,39 @@
+
+> viral-topic@0.1.0 dev
+> next dev --port 3000
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.29.28:3000
+- Environments: .env.local
+✓ Ready in 1127ms
+Creating turbopack project { dir: 'C:\\Users\\DELL\\New folder\\viral-topic', testMode: true }
+
+ GET / 200 in 4.5s (next.js: 466ms, application-code: 4.0s)
+ GET /api/videos?page=0&limit=24 200 in 621ms (next.js: 130ms, application-code: 491ms)
+ GET /api/videos?limit=1 200 in 511ms (next.js: 5ms, application-code: 505ms)
+ GET /api/videos/1dy0L4wQpMzJVr56m-tzjwBuLTmJbiZ--/stats 200 in 4.2s (next.js: 3.5s, application-code: 782ms)
+ POST /api/videos/1dy0L4wQpMzJVr56m-tzjwBuLTmJbiZ--/stats 500 in 923ms (next.js: 11ms, application-code: 912ms)
+ POST /api/videos/1dy0L4wQpMzJVr56m-tzjwBuLTmJbiZ--/comments 500 in 2.4s (next.js: 2.1s, application-code: 280ms)
+ GET /api/videos/1dy0L4wQpMzJVr56m-tzjwBuLTmJbiZ--/comments 200 in 57ms (next.js: 11ms, application-code: 47ms)
+ GET / 200 in 281ms (next.js: 111ms, application-code: 171ms)
+ GET / 200 in 165ms (next.js: 36ms, application-code: 129ms)
+ GET /api/videos?limit=1 200 in 617ms (next.js: 26ms, application-code: 591ms)
+ GET /api/videos/1dy0L4wQpMzJVr56m-tzjwBuLTmJbiZ--/stats 200 in 689ms (next.js: 167ms, application-code: 521ms)
+ POST /api/videos/1dy0L4wQpMzJVr56m-tzjwBuLTmJbiZ--/stats 200 in 92ms (next.js: 8ms, application-code: 84ms)
+ POST /api/videos/1dy0L4wQpMzJVr56m-tzjwBuLTmJbiZ--/comments 201 in 595ms (next.js: 79ms, application-code: 516ms)
+ GET /api/videos/1dy0L4wQpMzJVr56m-tzjwBuLTmJbiZ--/comments 200 in 97ms (next.js: 50ms, application-code: 46ms)
+✓ Compiled in 787ms
+ GET / 200 in 602ms (next.js: 180ms, application-code: 422ms)
+ GET / 200 in 551ms (next.js: 41ms, application-code: 510ms)
+ GET / 200 in 769ms (next.js: 6ms, application-code: 763ms)
+ GET / 200 in 778ms (next.js: 48ms, application-code: 730ms)
+ GET / 200 in 781ms (next.js: 96ms, application-code: 685ms)
+ GET / 200 in 791ms (next.js: 135ms, application-code: 656ms)
+ GET / 200 in 686ms (next.js: 211ms, application-code: 475ms)
+ GET /api/videos?limit=1 200 in 530ms (next.js: 23ms, application-code: 507ms)
+ GET /api/videos/1dy0L4wQpMzJVr56m-tzjwBuLTmJbiZ--/stats 200 in 542ms (next.js: 26ms, application-code: 516ms)
+ GET /api/videos/1dy0L4wQpMzJVr56m-tzjwBuLTmJbiZ--/comments 200 in 78ms (next.js: 23ms, application-code: 55ms)
+ GET /watch/18LrlAerJe4cKNzfxsszIo9gKUzkNr0pV 200 in 1488ms (next.js: 914ms, application-code: 574ms)
+ GET /api/videos/18LrlAerJe4cKNzfxsszIo9gKUzkNr0pV/comments 200 in 69ms (next.js: 15ms, application-code: 54ms)
+ GET /api/drive/media/18LrlAerJe4cKNzfxsszIo9gKUzkNr0pV 206 in 4.8s (next.js: 1269ms, application-code: 3.5s)
