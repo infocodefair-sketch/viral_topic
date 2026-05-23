@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Loader2, UploadCloud } from "lucide-react";
+import { ImagePlus, Loader2, Plus, UploadCloud, X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { RichTextEditor } from "@/components/RichTextEditor";
@@ -39,6 +39,7 @@ function htmlToText(value: string) {
 
 export function AdminImageUploader() {
   const queryClient = useQueryClient();
+  const [formOpen, setFormOpen] = useState(false);
   const [titleHtml, setTitleHtml] = useState("");
   const [descriptionHtml, setDescriptionHtml] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -53,11 +54,8 @@ export function AdminImageUploader() {
   const uploadMutation = useMutation({
     mutationFn: uploadImage,
     onSuccess: (image) => {
-      setTitleHtml("");
-      setDescriptionHtml("");
-      setFiles([]);
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
-      setPreviewUrls([]);
+      resetForm();
+      setFormOpen(false);
       setError("");
       queryClient.setQueryData(["viral-images"], (current: { items: ViralImage[] } | undefined) => ({
         items: [image, ...(current?.items ?? [])],
@@ -77,6 +75,21 @@ export function AdminImageUploader() {
     const nextFiles = Array.from(event.target.files ?? []);
     setFiles(nextFiles);
     setPreviewUrls(nextFiles.map((file) => URL.createObjectURL(file)));
+  }
+
+  function resetForm() {
+    setTitleHtml("");
+    setDescriptionHtml("");
+    setFiles([]);
+    previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    setPreviewUrls([]);
+  }
+
+  function closeForm() {
+    if (uploadMutation.isPending) return;
+    resetForm();
+    setError("");
+    setFormOpen(false);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -101,74 +114,19 @@ export function AdminImageUploader() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,460px)_1fr]">
-      <form onSubmit={handleSubmit} className="glass h-fit rounded-lg p-5">
-        <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-lg bg-orange-500 text-black">
-            <ImagePlus className="size-5" />
-          </span>
-          <div>
-            <h1 className="text-2xl font-black">Image admin</h1>
-            <p className="text-sm text-neutral-400">Publish viral image cards to the homepage.</p>
-          </div>
-        </div>
-
-        <div className="mt-5 space-y-4">
-          <label className="block">
-            <span className="text-sm font-semibold text-neutral-300">Title</span>
-            <div className="mt-2">
-              <RichTextEditor value={titleHtml} onChange={setTitleHtml} placeholder="Weekend edit is taking off" compact />
-            </div>
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-semibold text-neutral-300">Description</span>
-            <div className="mt-2">
-              <RichTextEditor value={descriptionHtml} onChange={setDescriptionHtml} placeholder="Add a short caption or context for this image." />
-            </div>
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-semibold text-neutral-300">Image</span>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleFilesChange}
-              className="mt-2 block w-full rounded-lg border border-dashed border-white/15 bg-black/30 px-3 py-3 text-sm text-neutral-300 file:mr-3 file:rounded-md file:border-0 file:bg-orange-500 file:px-3 file:py-2 file:text-sm file:font-black file:text-black"
-            />
-            <span className="mt-2 block text-xs text-neutral-500">Upload up to 12 images for one topic.</span>
-          </label>
-
-          {previewUrls.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {previewUrls.map((previewUrl, index) => (
-                <div key={previewUrl} className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black">
-                  <Image src={previewUrl} alt={`Preview ${index + 1}`} fill className="object-cover" unoptimized />
-                  {index === 0 ? <span className="absolute left-2 top-2 rounded bg-orange-500 px-2 py-1 text-[10px] font-black text-black">Cover</span> : null}
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          {error ? <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</p> : null}
-
-          <button
-            disabled={uploadMutation.isPending}
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-orange-500 px-5 text-sm font-black text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {uploadMutation.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <UploadCloud className="mr-2 size-4" />}
-            Publish topic
-          </button>
-        </div>
-      </form>
-
+    <>
       <section>
-        <div className="mb-4 flex items-end justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-sm font-bold uppercase text-orange-300">Published</p>
             <h2 className="mt-1 text-2xl font-black">Recent viral topics</h2>
           </div>
+          <button
+            onClick={() => setFormOpen(true)}
+            className="inline-flex h-11 items-center rounded-lg bg-orange-500 px-5 text-sm font-black text-black transition hover:bg-orange-400"
+          >
+            <Plus className="mr-2 size-4" /> Add new entry
+          </button>
         </div>
         {imagesQuery.isLoading ? <div className="glass rounded-lg p-5 text-sm text-neutral-400">Loading uploads...</div> : null}
         {imagesQuery.isError ? <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-5 text-sm text-red-200">Unable to load uploaded images.</div> : null}
@@ -187,6 +145,76 @@ export function AdminImageUploader() {
           ))}
         </div>
       </section>
-    </div>
+
+      {formOpen ? (
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/75 px-4 py-6 backdrop-blur-sm">
+          <div className="mx-auto min-h-full w-full max-w-2xl">
+            <form onSubmit={handleSubmit} className="glass rounded-lg p-5 shadow-2xl shadow-black/60" role="dialog" aria-modal="true" aria-labelledby="image-admin-title">
+              <div className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-orange-500 text-black">
+                  <ImagePlus className="size-5" />
+                </span>
+                <div className="min-w-0">
+                  <h1 id="image-admin-title" className="text-2xl font-black">Image admin</h1>
+                  <p className="text-sm text-neutral-400">Publish viral image cards to the homepage.</p>
+                </div>
+                <button type="button" onClick={closeForm} className="ml-auto rounded-full p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white" aria-label="Close form">
+                  <X className="size-5" />
+                </button>
+              </div>
+
+              <div className="mt-5 space-y-4">
+                <label className="block">
+                  <span className="text-sm font-semibold text-neutral-300">Title</span>
+                  <div className="mt-2">
+                    <RichTextEditor value={titleHtml} onChange={setTitleHtml} placeholder="Weekend edit is taking off" compact />
+                  </div>
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-neutral-300">Description</span>
+                  <div className="mt-2">
+                    <RichTextEditor value={descriptionHtml} onChange={setDescriptionHtml} placeholder="Add a short caption or context for this image." />
+                  </div>
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-neutral-300">Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFilesChange}
+                    className="mt-2 block w-full rounded-lg border border-dashed border-white/15 bg-black/30 px-3 py-3 text-sm text-neutral-300 file:mr-3 file:rounded-md file:border-0 file:bg-orange-500 file:px-3 file:py-2 file:text-sm file:font-black file:text-black"
+                  />
+                  <span className="mt-2 block text-xs text-neutral-500">Upload up to 12 images for one topic.</span>
+                </label>
+
+                {previewUrls.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {previewUrls.map((previewUrl, index) => (
+                      <div key={previewUrl} className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black">
+                        <Image src={previewUrl} alt={`Preview ${index + 1}`} fill className="object-cover" unoptimized />
+                        {index === 0 ? <span className="absolute left-2 top-2 rounded bg-orange-500 px-2 py-1 text-[10px] font-black text-black">Cover</span> : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {error ? <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</p> : null}
+
+                <button
+                  disabled={uploadMutation.isPending}
+                  className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-orange-500 px-5 text-sm font-black text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {uploadMutation.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <UploadCloud className="mr-2 size-4" />}
+                  Publish topic
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

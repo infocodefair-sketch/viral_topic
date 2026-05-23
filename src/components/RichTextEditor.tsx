@@ -39,10 +39,7 @@ export function RichTextEditor({ value, onChange, placeholder, compact = false }
     [compact],
   );
 
-  const formats = useMemo(
-    () => ["header", "bold", "italic", "underline", "strike", "list", "bullet", "blockquote", "link"],
-    [],
-  );
+  const formats = useMemo(() => ["header", "bold", "italic", "underline", "strike", "list", "blockquote", "link"], []);
 
   return (
     <div className={compact ? "quill-shell quill-shell-compact" : "quill-shell"}>
@@ -50,4 +47,3 @@ export function RichTextEditor({ value, onChange, placeholder, compact = false }
     </div>
   );
 }
-
