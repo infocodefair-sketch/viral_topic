@@ -1,12 +1,14 @@
 import { Radio, SlidersHorizontal, Star, UsersRound } from "lucide-react";
 import { CategoryTabs } from "@/components/CategoryTabs";
 import { ComingSoonSection } from "@/components/ComingSoonSection";
+import { HdPricingSection } from "@/components/HdPricingSection";
 import { InfiniteScroll } from "@/components/InfiniteScroll";
 import { AppShell } from "@/layouts/AppShell";
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const category = decodeURIComponent(slug);
+  const isHd = category.toLowerCase() === "hd";
   const comingSoon = {
     live: {
       eyebrow: "Live endpoint",
@@ -32,8 +34,11 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     <AppShell>
       <div className="px-4 sm:px-6">
         <CategoryTabs />
-        <section className="py-6">
-          {comingSoon ? (
+        {isHd ? (
+          <HdPricingSection />
+        ) : (
+          <section className="py-6">
+            {comingSoon ? (
             <ComingSoonSection {...comingSoon} />
           ) : (
             <>
@@ -50,7 +55,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
               <InfiniteScroll category={category} />
             </>
           )}
-        </section>
+          </section>
+        )}
       </div>
     </AppShell>
   );
