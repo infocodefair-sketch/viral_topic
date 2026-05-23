@@ -46,7 +46,6 @@ export const categories = [
   "Short Clips",
   "Premium",
   "New",
-  "Popular",
   "Creators",
   "HD",
   "VR",

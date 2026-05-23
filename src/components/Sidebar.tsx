@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock3, Flame, Heart, History, Home, ListVideo, PlaySquare, Radio, Star, UsersRound } from "lucide-react";
+import { Clock3, Flame, History, Home, ListVideo, PlaySquare, Radio, Star, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useUIStore } from "@/store/uiStore";
@@ -16,7 +16,6 @@ const items = [
   { href: "/category/Creators", label: "Creators", icon: UsersRound },
   { href: "/category/HD", label: "HD", icon: PlaySquare },
   { href: "/playlist/playlist-2", label: "Watch later", icon: Clock3 },
-  { href: "/category/Popular", label: "Liked", icon: Heart },
 ];
 
 export function Sidebar() {
