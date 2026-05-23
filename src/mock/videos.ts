@@ -38,8 +38,8 @@ export type Playlist = {
 
 export const categories = [
   "Trending",
-  "Drive Videos",
-  "Drive Images",
+  "Library Videos",
+  "Library Images",
   "Featured",
   "Studio",
   "Live",

@@ -32,8 +32,8 @@ type VideoQuery = {
 };
 
 const driveCreator: Creator = {
-  id: "google-drive",
-  name: "Google Drive",
+  id: "media-library",
+  name: "Media Library",
   avatar: "https://i.pravatar.cc/96?img=12",
   followers: 1,
   verified: true,
@@ -71,7 +71,7 @@ const mapDriveFileToVideo = (file: DriveFile, index: number): Video => {
 
   return {
     id: file.id,
-    title: cleanTitle(file.name) || `Drive media ${index + 1}`,
+    title: cleanTitle(file.name) || `Media item ${index + 1}`,
     creator: driveCreator,
     thumbnail: makeThumbnail(file),
     preview: makeThumbnail(file),
@@ -84,11 +84,11 @@ const mapDriveFileToVideo = (file: DriveFile, index: number): Video => {
     views: 1000 + (seed % 90000),
     likes: 100 + (seed % 9000),
     uploadedAt: file.createdTime ?? file.modifiedTime ?? new Date().toISOString(),
-    category: isImage ? "Drive Images" : "Drive Videos",
-    tags: ["google-drive", isImage ? "image" : "video", file.mimeType.split("/")[1] ?? "media"],
+    category: isImage ? "Library Images" : "Library Videos",
+    tags: ["media-library", isImage ? "image" : "video", file.mimeType.split("/")[1] ?? "media"],
     hd: (file.videoMediaMetadata?.width ?? 0) >= 1280 || isImage,
     trending: index < 6,
-    description: `Fetched from Google Drive${file.webViewLink ? `: ${file.webViewLink}` : "."}`,
+    description: "Added to the media library and ready to stream.",
   };
 };
 
@@ -123,7 +123,7 @@ async function listDriveMedia() {
     const data = (await response.json()) as DriveListResponse;
 
     if (!response.ok) {
-      throw new Error(data.error?.message ?? "Unable to fetch Google Drive media");
+      throw new Error(data.error?.message ?? "Unable to fetch media files");
     }
 
     files.push(...(data.files ?? []));

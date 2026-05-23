@@ -27,7 +27,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   });
 
   if (!driveResponse.ok && driveResponse.status !== 206) {
-    return NextResponse.json({ error: "Unable to load Google Drive media" }, { status: driveResponse.status });
+    return NextResponse.json({ error: "Unable to load media" }, { status: driveResponse.status });
   }
 
   const responseHeaders = new Headers();

@@ -20,9 +20,9 @@ export default async function HomePage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-sm font-bold uppercase text-orange-300">Realtime feed</p>
-                <h1 className="mt-2 text-3xl font-black tracking-normal sm:text-5xl">Google Drive media discovery</h1>
+                <h1 className="mt-2 text-3xl font-black tracking-normal sm:text-5xl">Media library discovery</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
-                  Videos and images are fetched from your Drive folder, then rendered through the existing fast grid and watch experience.
+                  Videos and images are loaded into a fast grid and watch experience with previews, playback, comments, and sharing.
                 </p>
               </div>
               <div className="rounded-lg border border-orange-400/30 bg-orange-500/10 px-4 py-3">
@@ -31,7 +31,7 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-          <h2 className="mb-4 text-xl font-bold">Latest from Drive</h2>
+          <h2 className="mb-4 text-xl font-bold">Latest uploads</h2>
           <VideoGrid videos={trending} />
         </section>
         <section className="py-6">
