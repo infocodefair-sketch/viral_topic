@@ -6,6 +6,7 @@ import { FormEvent, useMemo, useState } from "react";
 import type { Video } from "@/mock/videos";
 import { formatViews } from "@/utils/format";
 import { CommentCard } from "./CommentCard";
+import { ShareModal } from "./ShareModal";
 
 type VideoStats = {
   videoId: string;
@@ -71,8 +72,10 @@ export function WatchEngagement({ video }: { video: Video }) {
   const queryClient = useQueryClient();
   const [author, setAuthor] = useState("");
   const [comment, setComment] = useState("");
+  const [shareOpen, setShareOpen] = useState(false);
   const statsKey = useMemo(() => ["video-stats", video.id], [video.id]);
   const commentsKey = useMemo(() => ["video-comments", video.id], [video.id]);
+  const shareUrl = typeof window === "undefined" ? `/watch/${video.id}` : window.location.href;
 
   const statsQuery = useQuery({
     queryKey: statsKey,
@@ -108,15 +111,9 @@ export function WatchEngagement({ video }: { video: Video }) {
   const comments = commentsQuery.data?.items ?? [];
   const commentCount = Math.max(stats.comments, comments.length);
 
-  async function handleShare() {
-    await statMutation.mutateAsync("shares");
-
-    if (navigator.share) {
-      await navigator.share({ title: video.title, url: window.location.href }).catch(() => undefined);
-      return;
-    }
-
-    await navigator.clipboard?.writeText(window.location.href).catch(() => undefined);
+  function handleShare() {
+    statMutation.mutate("shares");
+    setShareOpen(true);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -179,6 +176,7 @@ export function WatchEngagement({ video }: { video: Video }) {
         ))}
         {!commentsQuery.isLoading && comments.length === 0 ? <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4 text-sm text-neutral-400">No comments yet.</div> : null}
       </section>
+      <ShareModal open={shareOpen} title={video.title} url={shareUrl} onClose={() => setShareOpen(false)} />
     </>
   );
 }
