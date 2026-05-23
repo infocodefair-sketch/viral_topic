@@ -31,13 +31,20 @@ type VideoQuery = {
   query?: string;
 };
 
-const driveCreator: Creator = {
-  id: "media-library",
-  name: "Media Library",
+type DriveSource = {
+  folderId?: string;
+  creatorName?: string;
+  categoryName?: string;
+  tag?: string;
+};
+
+const makeCreator = (name = "Media Library"): Creator => ({
+  id: name.toLowerCase().replace(/\s+/g, "-"),
+  name,
   avatar: "https://i.pravatar.cc/96?img=12",
   followers: 1,
   verified: true,
-};
+});
 
 const hashNumber = (value: string) =>
   [...value].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 7);
@@ -65,14 +72,16 @@ const makeThumbnail = (file: DriveFile) => {
   return `/api/drive/media/${file.id}`;
 };
 
-const mapDriveFileToVideo = (file: DriveFile, index: number): Video => {
+const mapDriveFileToVideo = (file: DriveFile, index: number, source: DriveSource = {}): Video => {
   const isImage = file.mimeType.startsWith("image/");
   const seed = hashNumber(file.id);
+  const category = source.categoryName ?? (isImage ? "Library Images" : "Library Videos");
+  const creator = makeCreator(source.creatorName);
 
   return {
     id: file.id,
     title: cleanTitle(file.name) || `Media item ${index + 1}`,
-    creator: driveCreator,
+    creator,
     thumbnail: makeThumbnail(file),
     preview: makeThumbnail(file),
     kind: isImage ? "image" : "video",
@@ -84,16 +93,16 @@ const mapDriveFileToVideo = (file: DriveFile, index: number): Video => {
     views: 1000 + (seed % 90000),
     likes: 100 + (seed % 9000),
     uploadedAt: file.createdTime ?? file.modifiedTime ?? new Date().toISOString(),
-    category: isImage ? "Library Images" : "Library Videos",
-    tags: ["media-library", isImage ? "image" : "video", file.mimeType.split("/")[1] ?? "media"],
+    category,
+    tags: [source.tag ?? "media-library", isImage ? "image" : "video", file.mimeType.split("/")[1] ?? "media"],
     hd: (file.videoMediaMetadata?.width ?? 0) >= 1280 || isImage,
     trending: index < 6,
     description: "Added to the media library and ready to stream.",
   };
 };
 
-async function listDriveMedia() {
-  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+async function listDriveMedia(source: DriveSource = {}) {
+  const folderId = source.folderId ?? process.env.GOOGLE_DRIVE_FOLDER_ID;
   const apiKey = process.env.GOOGLE_DRIVE_API_KEY;
 
   if (!folderId || !apiKey) {
@@ -132,7 +141,7 @@ async function listDriveMedia() {
 
   return files
     .filter((file) => file.mimeType.startsWith("video/") || file.mimeType.startsWith("image/"))
-    .map(mapDriveFileToVideo);
+    .map((file, index) => mapDriveFileToVideo(file, index, source));
 }
 
 async function getRepositoryVideos() {
@@ -142,6 +151,22 @@ async function getRepositoryVideos() {
   } catch (error) {
     console.error(error);
     return videos;
+  }
+}
+
+async function getViralRepositoryVideos() {
+  try {
+    const viralVideos = await listDriveMedia({
+      folderId: process.env.VIRAL_VIDEOS_FOLDER_ID,
+      creatorName: "Viral Videos",
+      categoryName: "Viral Videos",
+      tag: "viral-videos",
+    });
+
+    return viralVideos.filter((video) => video.kind !== "image");
+  } catch (error) {
+    console.error(error);
+    return [];
   }
 }
 
@@ -175,14 +200,30 @@ export async function getVideos({ page = 0, limit = 24, category, query }: Video
 }
 
 export async function getVideo(id: string) {
-  const repositoryVideos = await getRepositoryVideos();
-  return repositoryVideos.find((video) => video.id === id) ?? repositoryVideos[0] ?? videos[0];
+  const [repositoryVideos, viralVideos] = await Promise.all([getRepositoryVideos(), getViralRepositoryVideos()]);
+  const allVideos = [...repositoryVideos, ...viralVideos];
+  return allVideos.find((video) => video.id === id) ?? repositoryVideos[0] ?? videos[0];
 }
 
 export async function getSuggested(id?: string) {
-  const repositoryVideos = await getRepositoryVideos();
-  const currentIndex = Math.max(0, repositoryVideos.findIndex((video) => video.id === id));
-  const suggested = repositoryVideos.filter((video) => video.id !== id);
+  const [repositoryVideos, viralVideos] = await Promise.all([getRepositoryVideos(), getViralRepositoryVideos()]);
+  const combinedVideos = [...repositoryVideos, ...viralVideos];
+  const sourceVideos = combinedVideos.length > 0 ? combinedVideos : videos;
+  const currentIndex = Math.max(0, sourceVideos.findIndex((video) => video.id === id));
+  const suggested = sourceVideos.filter((video) => video.id !== id);
 
   return suggested.slice(currentIndex, currentIndex + 12).concat(suggested.slice(0, 12)).slice(0, 12);
+}
+
+export async function getViralVideos({ page = 0, limit = 24, query }: Omit<VideoQuery, "category"> = {}) {
+  const viralVideos = await getViralRepositoryVideos();
+  const filtered = filterVideos(viralVideos, undefined, query);
+  const start = page * limit;
+
+  return {
+    items: filtered.slice(start, start + limit),
+    nextPage: start + limit < filtered.length ? page + 1 : undefined,
+    total: filtered.length,
+    configured: Boolean(process.env.VIRAL_VIDEOS_FOLDER_ID),
+  };
 }

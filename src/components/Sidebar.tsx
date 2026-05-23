@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock3, Flame, History, Home, ListVideo, PlaySquare, Radio, Star, UsersRound } from "lucide-react";
+import { Clapperboard, Clock3, Flame, History, Home, ListVideo, PlaySquare, Radio, Star, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useUIStore } from "@/store/uiStore";
@@ -8,6 +8,7 @@ import { cn } from "@/utils/cn";
 
 const items = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/viral-videos", label: "Viral Videos", icon: Clapperboard },
   { href: "/category/Trending", label: "Trending", icon: Flame },
   { href: "/category/Live", label: "Live", icon: Radio },
   { href: "/playlist/playlist-1", label: "Playlists", icon: ListVideo },
