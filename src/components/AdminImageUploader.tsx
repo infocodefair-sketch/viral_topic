@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Loader2, UploadCloud } from "lucide-react";
 import Image from "next/image";
-import { FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import type { ViralImage } from "@/services/viralImageRepository";
 
 async function fetchViralImages() {
@@ -30,9 +30,9 @@ export function AdminImageUploader() {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [error, setError] = useState("");
-  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
 
   const imagesQuery = useQuery({
     queryKey: ["viral-images"],
@@ -44,7 +44,9 @@ export function AdminImageUploader() {
     onSuccess: (image) => {
       setTitle("");
       setDescription("");
-      setFile(null);
+      setFiles([]);
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+      setPreviewUrls([]);
       setError("");
       queryClient.setQueryData(["viral-images"], (current: { items: ViralImage[] } | undefined) => ({
         items: [image, ...(current?.items ?? [])],
@@ -53,19 +55,32 @@ export function AdminImageUploader() {
     onError: (uploadError: Error) => setError(uploadError.message),
   });
 
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
+
+  function handleFilesChange(event: ChangeEvent<HTMLInputElement>) {
+    previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    const nextFiles = Array.from(event.target.files ?? []);
+    setFiles(nextFiles);
+    setPreviewUrls(nextFiles.map((file) => URL.createObjectURL(file)));
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
-    if (!title.trim() || !description.trim() || !file) {
-      setError("Add a title, description, and image.");
+    if (!title.trim() || !description.trim() || files.length === 0) {
+      setError("Add a title, description, and at least one image.");
       return;
     }
 
     const formData = new FormData();
     formData.set("title", title);
     formData.set("description", description);
-    formData.set("image", file);
+    files.forEach((file) => formData.append("images", file));
     uploadMutation.mutate(formData);
   }
 
@@ -111,14 +126,21 @@ export function AdminImageUploader() {
             <input
               type="file"
               accept="image/*"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              multiple
+              onChange={handleFilesChange}
               className="mt-2 block w-full rounded-lg border border-dashed border-white/15 bg-black/30 px-3 py-3 text-sm text-neutral-300 file:mr-3 file:rounded-md file:border-0 file:bg-orange-500 file:px-3 file:py-2 file:text-sm file:font-black file:text-black"
             />
+            <span className="mt-2 block text-xs text-neutral-500">Upload up to 12 images for one topic.</span>
           </label>
 
-          {previewUrl ? (
-            <div className="relative aspect-video overflow-hidden rounded-lg border border-white/10 bg-black">
-              <Image src={previewUrl} alt="" fill className="object-cover" unoptimized />
+          {previewUrls.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {previewUrls.map((previewUrl, index) => (
+                <div key={previewUrl} className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black">
+                  <Image src={previewUrl} alt={`Preview ${index + 1}`} fill className="object-cover" unoptimized />
+                  {index === 0 ? <span className="absolute left-2 top-2 rounded bg-orange-500 px-2 py-1 text-[10px] font-black text-black">Cover</span> : null}
+                </div>
+              ))}
             </div>
           ) : null}
 
@@ -129,7 +151,7 @@ export function AdminImageUploader() {
             className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-orange-500 px-5 text-sm font-black text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {uploadMutation.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <UploadCloud className="mr-2 size-4" />}
-            Publish image
+            Publish topic
           </button>
         </div>
       </form>
@@ -138,7 +160,7 @@ export function AdminImageUploader() {
         <div className="mb-4 flex items-end justify-between gap-3">
           <div>
             <p className="text-sm font-bold uppercase text-orange-300">Published</p>
-            <h2 className="mt-1 text-2xl font-black">Recent viral images</h2>
+            <h2 className="mt-1 text-2xl font-black">Recent viral topics</h2>
           </div>
         </div>
         {imagesQuery.isLoading ? <div className="glass rounded-lg p-5 text-sm text-neutral-400">Loading uploads...</div> : null}
@@ -147,7 +169,8 @@ export function AdminImageUploader() {
           {imagesQuery.data?.items.map((image) => (
             <article key={image.id} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
               <div className="relative aspect-video bg-black">
-                <Image src={image.imageUrl} alt={image.title} fill sizes="(max-width: 1280px) 50vw, 33vw" className="object-cover" />
+                <Image src={image.coverImageUrl} alt={image.title} fill sizes="(max-width: 1280px) 50vw, 33vw" className="object-cover" />
+                <span className="absolute right-2 top-2 rounded bg-black/75 px-2 py-1 text-[10px] font-bold text-white">{image.imageCount} images</span>
               </div>
               <div className="p-4">
                 <h3 className="line-clamp-2 text-sm font-bold">{image.title}</h3>
@@ -160,4 +183,3 @@ export function AdminImageUploader() {
     </div>
   );
 }
-

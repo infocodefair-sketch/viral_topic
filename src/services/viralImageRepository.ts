@@ -7,18 +7,26 @@ export type ViralImage = {
   id: string;
   title: string;
   description: string;
+  coverImageUrl: string;
+  images: ViralImageAsset[];
+  imageCount: number;
+  createdAt: string;
+};
+
+export type ViralImageAsset = {
   imageUrl: string;
   publicId: string;
   width?: number;
   height?: number;
   format?: string;
-  createdAt: string;
 };
 
 type ViralImageDocument = {
   _id: ObjectId;
   title: string;
   description: string;
+  coverImageUrl?: string;
+  images?: ViralImageAsset[];
   imageUrl: string;
   publicId: string;
   width?: number;
@@ -27,17 +35,36 @@ type ViralImageDocument = {
   createdAt: Date;
 };
 
-const toViralImage = (image: ViralImageDocument): ViralImage => ({
-  id: image._id.toString(),
-  title: image.title,
-  description: image.description,
-  imageUrl: image.imageUrl,
-  publicId: image.publicId,
-  width: image.width,
-  height: image.height,
-  format: image.format,
-  createdAt: image.createdAt.toISOString(),
-});
+const getAssets = (image: ViralImageDocument): ViralImageAsset[] => {
+  if (image.images?.length) {
+    return image.images;
+  }
+
+  return [
+    {
+      imageUrl: image.imageUrl,
+      publicId: image.publicId,
+      width: image.width,
+      height: image.height,
+      format: image.format,
+    },
+  ];
+};
+
+const toViralImage = (image: ViralImageDocument): ViralImage => {
+  const assets = getAssets(image);
+  const cover = image.coverImageUrl ?? assets[0]?.imageUrl ?? image.imageUrl;
+
+  return {
+    id: image._id.toString(),
+    title: image.title,
+    description: image.description,
+    coverImageUrl: cover,
+    images: assets,
+    imageCount: assets.length,
+    createdAt: image.createdAt.toISOString(),
+  };
+};
 
 function uploadBuffer(buffer: Buffer, folder = "viral-topic/images") {
   const cloudinary = getCloudinary();
@@ -75,22 +102,47 @@ export async function getViralImages(limit = 8) {
   return images.map(toViralImage);
 }
 
+export async function getViralImage(id: string) {
+  if (!ObjectId.isValid(id)) {
+    return null;
+  }
+
+  const db = await getDb();
+  const image = await db.collection<ViralImageDocument>("viral_images").findOne({ _id: new ObjectId(id) });
+
+  return image ? toViralImage(image) : null;
+}
+
 export async function createViralImage(input: {
   title: string;
   description: string;
-  file: File;
+  files: File[];
 }) {
-  const arrayBuffer = await input.file.arrayBuffer();
-  const uploaded = await uploadBuffer(Buffer.from(arrayBuffer));
+  const uploadedImages = await Promise.all(
+    input.files.map(async (file) => {
+      const arrayBuffer = await file.arrayBuffer();
+      const uploaded = await uploadBuffer(Buffer.from(arrayBuffer));
+
+      return {
+        imageUrl: uploaded.secure_url,
+        publicId: uploaded.public_id,
+        width: uploaded.width,
+        height: uploaded.height,
+        format: uploaded.format,
+      };
+    }),
+  );
   const db = await getDb();
   const document = {
     title: input.title,
     description: input.description,
-    imageUrl: uploaded.secure_url,
-    publicId: uploaded.public_id,
-    width: uploaded.width,
-    height: uploaded.height,
-    format: uploaded.format,
+    coverImageUrl: uploadedImages[0].imageUrl,
+    images: uploadedImages,
+    imageUrl: uploadedImages[0].imageUrl,
+    publicId: uploadedImages[0].publicId,
+    width: uploadedImages[0].width,
+    height: uploadedImages[0].height,
+    format: uploadedImages[0].format,
     createdAt: new Date(),
   };
 
@@ -98,4 +150,3 @@ export async function createViralImage(input: {
 
   return toViralImage({ _id: result.insertedId, ...document });
 }
-
